@@ -1,0 +1,7 @@
+allowBuilds:
+  '@firebase/util': set this to true or false
+  esbuild: true
+  protobufjs: true
+overrides:
+  '@grpc/grpc-js@<1.13.6': ^1.13.6
+  minimatch@>=7.0.0 <11.0.1: ^11.0.1

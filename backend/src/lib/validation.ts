@@ -1,10 +1,12 @@
 const PAGE_MIN = 1;
 const PAGE_MAX = 300;
+const ID_MIN = 1;
+const ID_MAX = 2_147_483_647;
 const SEARCH_QUERY_MAX_LENGTH = 100;
 const LANGUAGE_MAX_LENGTH = 10;
 
 /**
- * Valida page: inteiro entre 1 e 500.
+ * Valida page: inteiro entre 1 e 300.
  * Retorna o valor validado ou null se inválido.
  */
 export function parsePage(value: string | undefined): number | null {
@@ -15,13 +17,13 @@ export function parsePage(value: string | undefined): number | null {
 }
 
 /**
- * Valida id: inteiro positivo.
+ * Valida id: inteiro entre ID_MIN e ID_MAX (evita overflow/abuso).
  * Retorna o valor ou null se inválido.
  */
 export function parseId(value: string | undefined): number | null {
   if (value === undefined || value === "") return null;
   const n = parseInt(value, 10);
-  if (Number.isNaN(n) || n < 1) return null;
+  if (Number.isNaN(n) || n < ID_MIN || n > ID_MAX) return null;
   return n;
 }
 
@@ -53,4 +55,18 @@ export function parseLanguage(value: string | undefined): string | undefined {
  */
 export function parseTimeWindow(value: string | undefined): "day" | "week" {
   return value === "day" ? "day" : "week";
+}
+
+const GENRE_MIN = 1;
+const GENRE_MAX = 999;
+
+/**
+ * Valida genre ID: inteiro entre 1 e 999 (TMDB genre IDs).
+ * Retorna o valor ou null se inválido.
+ */
+export function parseGenre(value: string | undefined): number | null {
+  if (value === undefined || value === "") return null;
+  const n = parseInt(value, 10);
+  if (Number.isNaN(n) || n < GENRE_MIN || n > GENRE_MAX) return null;
+  return n;
 }

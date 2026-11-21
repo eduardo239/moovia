@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
+import { Star, Plus, Check, BookmarkMinus, Trash2 } from "lucide-react";
 import { getPosterUrl } from "../utils/tmdb";
+import { type MovieItem } from "../context/MovieContext";
+import { useWatchActions } from "../hooks/useWatchActions";
 
 interface MovieCardProps {
   id: number;
@@ -10,30 +13,6 @@ interface MovieCardProps {
   voteCount: number;
 }
 
-function StarIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  );
-}
-
-function WatchLaterIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-    </svg>
-  );
-}
-
-function WatchedIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-
 export function MovieCard({
   id,
   mediaType,
@@ -42,6 +21,34 @@ export function MovieCard({
   rating,
   voteCount,
 }: MovieCardProps) {
+  const { isInWatchLater, isInWatched, toggleWatchLater, toggleWatched } =
+    useWatchActions();
+
+  const isLater = isInWatchLater(id, mediaType);
+  const isWatched = isInWatched(id, mediaType);
+
+  const item: MovieItem = {
+    id,
+    mediaType,
+    poster_path: posterPath,
+    title: mediaType === "movie" ? title : undefined,
+    name: mediaType === "tv" ? title : undefined,
+    vote_average: rating,
+    vote_count: voteCount,
+  };
+
+  const handleWatchLater = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWatchLater(item);
+  };
+
+  const handleWatched = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWatched(item);
+  };
+
   return (
     <Link
       to={mediaType === "movie" ? `/movies/${id}` : `/tv/${id}`}
@@ -54,33 +61,42 @@ export function MovieCard({
           className="movie-card-poster"
           loading="lazy"
         />
+
+        {isLater && (
+          <div className="movie-card-badge badge-later">
+            <span>QUERO VER</span>
+          </div>
+        )}
+
+        {isWatched && (
+          <div className="movie-card-badge badge-watched">
+            <span>JÁ VI</span>
+          </div>
+        )}
+
         <div className="movie-card-actions">
           <button
             type="button"
-            className="movie-card-btn"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            aria-label="Ver depois"
+            className={`movie-card-btn ${isLater ? "active" : ""}`}
+            onClick={handleWatchLater}
+            aria-label={isLater ? "Remover do Ver depois" : "Ver depois"}
+            title={isLater ? "Remover do Ver depois" : "Ver depois"}
           >
-            <WatchLaterIcon />
+            {isLater ? <BookmarkMinus size={18} /> : <Plus size={18} />}
           </button>
           <button
             type="button"
-            className="movie-card-btn"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            aria-label="Já vi"
+            className={`movie-card-btn ${isWatched ? "active" : ""}`}
+            onClick={handleWatched}
+            aria-label={isWatched ? "Remover do Já vi" : "Já vi"}
+            title={isWatched ? "Remover do Já vi" : "Já vi"}
           >
-            <WatchedIcon />
+            {isWatched ? <Trash2 size={16} /> : <Check size={18} />}
           </button>
         </div>
       </div>
       <div className="movie-card-rating">
-        <StarIcon />
+        <Star size={16} fill="currentColor" />
         <span>{rating.toFixed(1)}</span>
         <span>• {voteCount.toLocaleString("pt-BR")} avaliações</span>
       </div>

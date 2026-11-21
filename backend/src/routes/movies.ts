@@ -1,7 +1,12 @@
 import type { FastifyInstance, FastifyPluginOptions } from "fastify";
 import {
   getPopularMovies,
+  getDiscoverMovies,
   getMovieDetails,
+  getMovieVideos,
+  getMovieCredits,
+  getSimilarMovies,
+  getMovieWatchProviders,
   searchMovies,
   getUpcomingMovies,
 } from "../services/tmdb.js";
@@ -11,6 +16,7 @@ import {
   parseId,
   parseSearchQuery,
   parseLanguage,
+  parseGenre,
 } from "../lib/validation.js";
 
 export async function moviesRoutes(
@@ -18,13 +24,13 @@ export async function moviesRoutes(
   _opts: FastifyPluginOptions,
 ) {
   /**
-   * Get popular movies
+   * Get popular movies (or discover by genre when genre param is present)
    * @param request - Fastify request
    * @param reply - Fastify reply
-   * @returns Popular movies
+   * @returns Popular or genre-filtered movies
    */
   fastify.get<{
-    Querystring: { page?: string; language?: string };
+    Querystring: { page?: string; language?: string; genre?: string };
   }>("/popular", async (request, reply) => {
     try {
       const page = parsePage(request.query.page);
@@ -32,7 +38,11 @@ export async function moviesRoutes(
         return reply.status(400).send({ error: "Invalid page" });
       }
       const language = parseLanguage(request.query.language);
-      const data = await getPopularMovies(page, language);
+      const genreId = parseGenre(request.query.genre);
+      const data =
+        genreId !== null
+          ? await getDiscoverMovies(genreId, page, language)
+          : await getPopularMovies(page, language);
       return reply.type("application/json").send(data);
     } catch (error) {
       return handleTmdbError(error, reply);
@@ -48,6 +58,7 @@ export async function moviesRoutes(
   fastify.get<{
     Querystring: { page?: string; language?: string };
   }>("/upcoming", async (request, reply) => {
+    console.log("Upcoming movies requested");
     try {
       const page = parsePage(request.query.page);
       if (page === null) {
@@ -90,6 +101,100 @@ export async function moviesRoutes(
   });
 
   /**
+   * Get similar movies
+   * @param request - Fastify request
+   * @param reply - Fastify reply
+   * @returns Similar movies
+   */
+  fastify.get<{
+    Params: { id: string };
+    Querystring: { page?: string; language?: string };
+  }>("/:id/similar", async (request, reply) => {
+    try {
+      const id = parseId(request.params.id);
+      if (id === null) {
+        return reply.status(400).send({ error: "Invalid id" });
+      }
+      const page = parsePage(request.query.page);
+      if (page === null) {
+        return reply.status(400).send({ error: "Invalid page" });
+      }
+      const language = parseLanguage(request.query.language);
+      const data = await getSimilarMovies(id, page, language);
+      return reply.type("application/json").send(data);
+    } catch (error) {
+      return handleTmdbError(error, reply);
+    }
+  });
+
+  /**
+   * Get movie credits (cast and crew)
+   * @param request - Fastify request
+   * @param reply - Fastify reply
+   * @returns Movie credits
+   */
+  fastify.get<{
+    Params: { id: string };
+    Querystring: { language?: string };
+  }>("/:id/credits", async (request, reply) => {
+    try {
+      const id = parseId(request.params.id);
+      if (id === null) {
+        return reply.status(400).send({ error: "Invalid id" });
+      }
+      const language = parseLanguage(request.query.language);
+      const data = await getMovieCredits(id, language);
+      return reply.type("application/json").send(data);
+    } catch (error) {
+      return handleTmdbError(error, reply);
+    }
+  });
+
+  /**
+   * Get movie watch providers (streaming, rent, buy)
+   * @param request - Fastify request
+   * @param reply - Fastify reply
+   * @returns Watch providers by country
+   */
+  fastify.get<{
+    Params: { id: string };
+  }>("/:id/watch-providers", async (request, reply) => {
+    try {
+      const id = parseId(request.params.id);
+      if (id === null) {
+        return reply.status(400).send({ error: "Invalid id" });
+      }
+      const data = await getMovieWatchProviders(id);
+      return reply.type("application/json").send(data);
+    } catch (error) {
+      return handleTmdbError(error, reply);
+    }
+  });
+
+  /**
+   * Get movie videos (trailers, teasers, etc.)
+   * @param request - Fastify request
+   * @param reply - Fastify reply
+   * @returns Movie videos
+   */
+  fastify.get<{
+    Params: { id: string };
+    Querystring: { language?: string };
+  }>("/:id/videos", async (request, reply) => {
+    try {
+      const id = parseId(request.params.id);
+      if (id === null) {
+        return reply.status(400).send({ error: "Invalid id" });
+      }
+      const language = parseLanguage(request.query.language);
+      const data = await getMovieVideos(id, language);
+      return reply.type("application/json").send(data);
+    } catch (error) {
+      return handleTmdbError(error, reply);
+    }
+  });
+
+  /**
    * Get movie details
    * @param request - Fastify request
    * @param reply - Fastify reply
@@ -104,7 +209,8 @@ export async function moviesRoutes(
       if (id === null) {
         return reply.status(400).send({ error: "Invalid id" });
       }
-      const data = await getMovieDetails(id);
+      const language = parseLanguage(request.query.language);
+      const data = await getMovieDetails(id, language);
       return reply.type("application/json").send(data);
     } catch (error) {
       return handleTmdbError(error, reply);

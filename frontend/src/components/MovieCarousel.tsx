@@ -1,19 +1,14 @@
 import { useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MovieCard } from "./MovieCard";
+import type { CarouselCompatibleItem } from "../types/tmdb";
 
-export interface CarouselItem {
-  id: number;
-  poster_path: string | null;
-  vote_average: number;
-  vote_count: number;
-  title?: string;
-  name?: string;
-}
+export type { CarouselCompatibleItem as CarouselItem };
 
 interface MovieCarouselProps {
   title: string;
   icon: string;
-  items: CarouselItem[];
+  items: CarouselCompatibleItem[];
   mediaType: "movie" | "tv";
 }
 
@@ -47,36 +42,14 @@ export function MovieCarousel({
             onClick={() => scroll("left")}
             aria-label="Anterior"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width="1.2rem"
-              height="1.2rem"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <ChevronLeft size={20} strokeWidth={3} />
           </button>
           <button
             type="button"
             onClick={() => scroll("right")}
             aria-label="Próximo"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width="1.2rem"
-              height="1.2rem"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <ChevronRight size={20} strokeWidth={3} />
           </button>
         </div>
       </div>
